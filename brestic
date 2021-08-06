@@ -5,7 +5,7 @@
 #  git clone https://github.com/uGeek/brestic.git /opt/brestic/
 #  sudo ln -s /opt/brestic/brestic /usr/bin/brestic
 #  sudo chmod +x /usr/bin/brestic
-
+#
 #
 
 
@@ -29,6 +29,14 @@ fi
 
 
 source  ~/.config/brestic/source
+
+
+if [ "$1" = "install" ]
+then
+sudo apt install restic
+restic self-update
+exit
+fi
 
 
 if [ "$1" = "i" ]
@@ -310,6 +318,7 @@ Opción 	    Significado
  c          Listar archivos de configuración 
  m          Montar snapshot en el directorio ~/brestic
  copy       Copiar de un repositorio a otro
+ install    Instalar en distros derivadas de debian
 
 Opción 	                           Segunda Opción        Significado
  cl     [NOMBRE DE CONFIGURACIÓN]  [NÚMERO DE BACKUPS]   borrar todo excepto los ultminos backups Especificados por el numero

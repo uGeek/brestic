@@ -1,0 +1,348 @@
+#!/bin/bash
+#
+# 
+#
+#  git clone https://github.com/uGeek/brestic.git /opt/brestic/
+#  sudo ln -s /opt/brestic/brestic /usr/bin/brestic
+#  sudo chmod +x /usr/bin/brestic
+
+#
+
+
+VERSION="v0.3 06/08/2021"
+
+
+
+
+if [ "$1" = "e" ]
+then
+   $2 ~/.config/brestic/$3
+   exit
+   fi
+
+
+
+if [ "$2" != "" ]
+then
+    echo "source ~/.config/brestic/$2" >  ~/.config/brestic/source
+fi
+
+
+source  ~/.config/brestic/source
+
+
+if [ "$1" = "i" ]
+then
+    #restic -r rclone:dropbox_trabajo:bk  init
+
+RESTIC_PASSWORD=$PASS    restic -r $SERVER  init     
+exit
+fi
+
+
+if [ "$1" = "diff" ]
+then
+
+echo "
+ID        Time                 Host        Tags             Paths
+----------------------------------------------------------------------------"          
+    
+SNAP=$(RESTIC_PASSWORD=$PASS  restic -r $SERVER snapshots | tail -n +3 )
+echo "$SNAP" | head -n -2  | nl
+echo "---------------------------------------------------------------------------------------"
+echo "$SNAP" | tail -1 
+echo ""
+
+echo "¿Que nº de snapshoot quieres comparar?" ; read NUMERO1
+echo "Elige el otro snapshoot" ; read NUMERO2
+
+RESTIC_PASSWORD=$PASS  restic -r $SERVER diff "$(echo "$SNAP" | sed -n ""$NUMERO1""p |  cut -d " " -f1 |  sed 's/ //g')" "$(echo "$SNAP" | sed -n ""$NUMERO2""p |  cut -d " " -f1 |  sed 's/ //g')"
+
+exit
+fi
+
+
+
+if [ "$1" = "d" ] || [ "$1" = "rm" ]
+then
+
+echo "
+ID        Time                 Host        Tags             Paths
+----------------------------------------------------------------------------"
+
+SNAP=$(RESTIC_PASSWORD=$PASS  restic -r $SERVER snapshots --group-by "$3" | tail -n +3 )
+echo "$SNAP" | head -n -2  | nl
+echo "---------------------------------------------------------------------------------------"
+echo "$SNAP" | tail -1 
+echo ""
+
+
+
+
+echo "¿Que nº de snapshoot quieres borrar?" ; read NUMERO
+
+
+RESTIC_PASSWORD=$PASS  restic -r $SERVER forget "$(echo "$SNAP" | sed -n ""$NUMERO""p |  cut -d " " -f1 |  sed 's/ //g')"
+
+exit
+fi
+
+
+
+
+
+if [ "$1" = "r" ]
+then
+
+echo "
+ID        Time                 Host        Tags             Paths
+----------------------------------------------------------------------------"
+
+SNAP=$(RESTIC_PASSWORD=$PASS  restic -r $SERVER snapshots --group-by "$3" | tail -n +3 )
+echo "$SNAP" | head -n -2  | nl
+echo "---------------------------------------------------------------------------------------"
+echo "$SNAP" | tail -1 
+echo ""
+
+
+echo "¿Que nº de snapshoot quieres borrar?" ; read NUMERO
+echo "Ruta donde quiere restaurar el snapshoot" ; read TARGET
+
+
+RESTIC_PASSWORD=$PASS  restic -r $SERVER restore "$(echo "$SNAP" | sed -n ""$NUMERO""p |  cut -d " " -f1 |  sed 's/ //g')" --target $TARGET
+
+exit
+fi
+
+
+
+
+
+if [ "$1" = "cl" ]  
+then
+    RESTIC_PASSWORD=$PASS  restic -r $SERVER  forget --group-by host --keep-last "$3" --prune
+exit
+fi
+
+if [ "$1" = "clh" ]  
+then
+    RESTIC_PASSWORD=$PASS  restic -r $SERVER  forget --group-by host --keep-hourly "$3" --prune
+exit
+fi
+
+
+
+if [ "$1" = "cld" ]  
+then
+    RESTIC_PASSWORD=$PASS  restic -r $SERVER  forget --group-by host --keep-hourly "$3" --prune
+exit
+fi
+
+if [ "$1" = "clw" ]  
+then
+    RESTIC_PASSWORD=$PASS  restic -r $SERVER  forget --group-by host --keep-weekly "$3" --prune
+exit
+fi
+
+if [ "$1" = "clp" ]  
+then
+    RESTIC_PASSWORD=$PASS  restic -r $SERVER  forget $KEEP --prune
+exit
+fi
+
+
+if [ "$1" = "dd" ]
+then
+RESTIC_PASSWORD=$PASS  restic -r $SERVER prune
+
+exit
+fi
+
+
+
+if [ "$1" = "u" ]
+then
+RESTIC_PASSWORD=$PASS  restic -r $SERVER unlock
+
+exit
+fi
+
+
+if [ "$1" = "b" ]
+then
+    echo "---------------------------------------"
+echo ""
+
+    while read LINEA; do
+	
+	RESTIC_PASSWORD=$PASS restic -r $SERVER backup  $LINEA --verbose 
+	echo ""
+echo "---------------------------------------"
+echo ""
+
+    done <<< "$(cat ~/.config/brestic/"$2" | grep "^SOURCE" | cut -d "=" -f2- | sed s'|"||'g)"
+ 
+
+exit
+fi
+
+
+
+if [ "$1" = "ls" ]
+then
+RESTIC_PASSWORD=$PASS  restic -r $SERVER snapshots   
+exit
+fi
+
+
+if [ "$1" = "lsd" ]
+then
+RESTIC_PASSWORD=$PASS  restic -r $SERVER snapshots --path="$3"
+exit
+fi
+
+if [ "$1" = "lsh" ]
+then
+RESTIC_PASSWORD=$PASS  restic -r $SERVER snapshots --host "$3"
+exit
+fi
+
+if [ "$1" = "lsg" ]
+then
+RESTIC_PASSWORD=$PASS  restic -r $SERVER snapshots --group-by "$3"
+exit
+fi
+
+if [ "$1" = "lsl" ]
+then
+RESTIC_PASSWORD=$PASS  restic -r $SERVER ls latest
+exit
+fi
+
+
+
+if [ "$1" = "lss" ]
+then
+
+
+echo "
+ID        Time                 Host        Tags             Paths
+----------------------------------------------------------------------------"
+
+SNAP=$(RESTIC_PASSWORD=$PASS  restic -r $SERVER snapshots | tail -n +3 )
+
+echo "$SNAP" | head -n -2  | nl
+echo "---------------------------------------------------------------------------------------"
+echo "$SNAP" | tail -1 
+echo ""
+
+echo "¿Que nº de snapshoot quieres listar sus archivos?" ; read NUMERO
+RESTIC_PASSWORD=$PASS  restic -r $SERVER ls "$(echo "$SNAP" | sed -n ""$NUMERO""p |  cut -d " " -f1 |  sed 's/ //g')" 
+
+
+exit
+fi
+
+
+
+
+
+
+
+
+if [ "$1" = "m" ]
+then
+mkdir -p   ~/brestic        
+RESTIC_PASSWORD=$PASS restic -r $SERVER  mount ~/brestic    
+exit
+fi
+
+if [ "$1" = "c" ]
+then
+ ls -1 --ignore="source" ~/.config/brestic 
+exit
+fi
+
+
+if [ "$1" = "copy" ]
+then
+source ~/.config/brestic/$2
+REPO1=$(echo $SERVER)
+    
+source ~/.config/brestic/$3  
+REPO2=$(echo $SERVER)
+
+RESTIC_PASSWORD=$PASS  restic -r $REPO1 copy --repo2 $REPO2
+exit
+fi
+
+
+
+
+
+
+
+
+
+echo "Modo de empleo: brestic [OPCIONES] [NOMBRE DE CONFIGURACIÓN]
+
+Para crear un nuevo archivo de configuración o modificarlo:
+   
+     brestic e [EDITOR]  [NOMBRE DE CONFIGURACIÓN]
+ 
+                   Ejemplo:  brestic e nano webdav
+
+
+Opción 	    Significado
+ i          Iniciar repositorio
+ b          Hacer backup
+ r          Restaurar backup
+ ls         listar snapshot
+ lsl        listar archivos del ultimo backup
+ lss        Listar archivos de un snapshot 
+ lsd         Filtrar por directorio
+ lsh        Filtrar por host
+ lsg        Listar Filtrado por su grupo host, rutas, etiquetas. (host, path, tags). 
+ d / rm     borrar 1 snapshots de la lista. Podemos añadir última opción opcional, para filtrar por grupo
+ dd         Eliminar definiticamente todos los snapshots borrados de la lista  
+ u          Eliminar archivos obsoletos y bloqueos obsoletos . unlock. unlock --remove-all
+ diff       Compara entre snapshots. 
+ c          Listar archivos de configuración 
+ m          Montar snapshot en el directorio ~/brestic
+ copy       Copiar de un repositorio a otro
+
+Opción 	                           Segunda Opción        Significado
+ cl     [NOMBRE DE CONFIGURACIÓN]  [NÚMERO DE BACKUPS]   borrar todo excepto los ultminos backups Especificados por el numero
+ clh    [NOMBRE DE CONFIGURACIÓN]  [HORAS]               borrar por dias
+ cld    [NOMBRE DE CONFIGURACIÓN]  [DIAS]                dias
+ clw    [NOMBRE DE CONFIGURACIÓN]  [SEMANAS]             semanas
+ clp    [NOMBRE DE CONFIGURACIÓN]                        Según configuración en archivo de configuración
+
+
+Ejemplos:
+
+ Hacer backup del archivo de configuración trabajo
+
+    brestic b [NOMBRE DE CONFIGURACIÓN] 
+
+ Borrar un snapshoot. Opcional añadir el grupo para filtrar por grupo (host, path, tags).
+
+    brestic d [NOMBRE DE CONFIGURACIÓN] [GRUPO] 
+
+ Borrar todos los backups, excepto los 5 últimos
+
+    brestic cl [NOMBRE DE CONFIGURACIÓN] 5 
+
+ Copiar de un repositorio a otro.
+
+    brestic copy [NOMBRE DE CONFIGURACIÓN 1] [NOMBRE DE CONFIGURACIÓN 1]
+
+ Restaurar un snapshoot en una ruta:
+
+    brestic r [NOMBRE DE CONFIGURACIÓN]
+   
+    Para restaurar en la misma ruta que estaba, cuando pregunta la ruta, escribe / 
+
+
+brestic $VERSION
+"

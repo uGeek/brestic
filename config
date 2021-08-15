@@ -1,0 +1,12 @@
+# Repositorio en el servidor
+SERVER="rclone:local:/home/angel/brestic"   #SERVER=drive:backup/brestic
+
+# Contraseña del repositorio restic
+PASS=xxxxxxxxxxxxxx
+
+# Politica de permancer archivos  ejemplo:  brestic clp [respositorio]
+KEEP="--keep-yearly 2 --keep-monthly 13"
+
+# Directorios que haremos el backup
+SOURCE="/home/angel/.config/rclone      --tag rclone"
+SOURCE="/home/angel/docker/homer        --tag homer"

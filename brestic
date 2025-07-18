@@ -1,357 +1,214 @@
-#!/bin/bash
-#
-# 
-#
-#  git clone https://github.com/uGeek/brestic.git /opt/brestic/
-#  sudo ln -s /opt/brestic/brestic /usr/bin/brestic
-#  sudo chmod +x /usr/bin/brestic
-#  sudo apt install restic
-#  restic self-update
+#!/usr/bin/env bash
 
+# Salir inmediatamente si un comando falla (-e), si se usa una variable no definida (-u)
+# o si un comando en una tubería falla (-o pipefail).
+set -euo pipefail
 
-VERSION="v0.3 06/08/2021"
-
-
-
-
-if [ "$1" = "e" ]
-then
-   $2 ~/.config/brestic/$3
-   exit
-   fi
-
-
-
-if [ "$2" != "" ]
-then
-    echo "source ~/.config/brestic/$2" >  ~/.config/brestic/source
+# --- COMPROBACIÓN INICIAL DEL ENTORNO ---
+if [[ -z "${HOME:-}" ]]; then
+    echo "Error crítico: La variable de entorno \$HOME no está definida." >&2
+    exit 1
 fi
 
-
-source  ~/.config/brestic/source
-
-
-if [ "$1" = "install" ]
-then
-sudo apt install restic
-restic self-update
-exit
-fi
-
-
-if [ "$1" = "i" ]
-then
-    #restic -r rclone:dropbox_trabajo:bk  init
-
-RESTIC_PASSWORD=$PASS    restic -r $SERVER  init     
-exit
-fi
-
-
-if [ "$1" = "diff" ]
-then
-
-echo "
-ID        Time                 Host        Tags             Paths
-----------------------------------------------------------------------------"          
-    
-SNAP=$(RESTIC_PASSWORD=$PASS  restic -r $SERVER snapshots | tail -n +3 )
-echo "$SNAP" | head -n -2  | nl
-echo "---------------------------------------------------------------------------------------"
-echo "$SNAP" | tail -1 
-echo ""
-
-echo "¿Que nº de snapshoot quieres comparar?" ; read NUMERO1
-echo "Elige el otro snapshoot" ; read NUMERO2
-
-RESTIC_PASSWORD=$PASS  restic -r $SERVER diff "$(echo "$SNAP" | sed -n ""$NUMERO1""p |  cut -d " " -f1 |  sed 's/ //g')" "$(echo "$SNAP" | sed -n ""$NUMERO2""p |  cut -d " " -f1 |  sed 's/ //g')"
-
-exit
-fi
-
-
-
-if [ "$1" = "d" ] || [ "$1" = "rm" ]
-then
-
-echo "
-ID        Time                 Host        Tags             Paths
-----------------------------------------------------------------------------"
-
-SNAP=$(RESTIC_PASSWORD=$PASS  restic -r $SERVER snapshots --group-by "$3" | tail -n +3 )
-echo "$SNAP" | head -n -2  | nl
-echo "---------------------------------------------------------------------------------------"
-echo "$SNAP" | tail -1 
-echo ""
-
-
-
-
-echo "¿Que nº de snapshoot quieres borrar?" ; read NUMERO
-
-
-RESTIC_PASSWORD=$PASS  restic -r $SERVER forget "$(echo "$SNAP" | sed -n ""$NUMERO""p |  cut -d " " -f1 |  sed 's/ //g')"
-
-exit
-fi
-
-
-
-
-
-if [ "$1" = "r" ]
-then
-
-echo "
-ID        Time                 Host        Tags             Paths
-----------------------------------------------------------------------------"
-
-SNAP=$(RESTIC_PASSWORD=$PASS  restic -r $SERVER snapshots --group-by "$3" | tail -n +3 )
-echo "$SNAP" | head -n -2  | nl
-echo "---------------------------------------------------------------------------------------"
-echo "$SNAP" | tail -1 
-echo ""
-
-
-echo "¿Que nº de snapshoot quieres borrar?" ; read NUMERO
-echo "Ruta donde quiere restaurar el snapshoot" ; read TARGET
-
-
-RESTIC_PASSWORD=$PASS  restic -r $SERVER restore "$(echo "$SNAP" | sed -n ""$NUMERO""p |  cut -d " " -f1 |  sed 's/ //g')" --target $TARGET
-
-exit
-fi
-
-
-
-
-
-if [ "$1" = "cl" ]  
-then
-    RESTIC_PASSWORD=$PASS  restic -r $SERVER  forget --group-by host --keep-last "$3" --prune
-exit
-fi
-
-if [ "$1" = "clh" ]  
-then
-    RESTIC_PASSWORD=$PASS  restic -r $SERVER  forget --group-by host --keep-hourly "$3" --prune
-exit
-fi
-
-
-
-if [ "$1" = "cld" ]  
-then
-    RESTIC_PASSWORD=$PASS  restic -r $SERVER  forget --group-by host --keep-hourly "$3" --prune
-exit
-fi
-
-if [ "$1" = "clw" ]  
-then
-    RESTIC_PASSWORD=$PASS  restic -r $SERVER  forget --group-by host --keep-weekly "$3" --prune
-exit
-fi
-
-if [ "$1" = "clp" ]  
-then
-    RESTIC_PASSWORD=$PASS  restic -r $SERVER  forget $KEEP --prune
-exit
-fi
-
-
-if [ "$1" = "dd" ]
-then
-RESTIC_PASSWORD=$PASS  restic -r $SERVER prune
-
-exit
-fi
-
-
-
-if [ "$1" = "u" ]
-then
-RESTIC_PASSWORD=$PASS  restic -r $SERVER unlock
-
-exit
-fi
-
-
-if [ "$1" = "b" ]
-then
-    echo "---------------------------------------"
-echo ""
-
-    while read LINEA; do
-	
-	RESTIC_PASSWORD=$PASS restic -r $SERVER backup  $LINEA --verbose 
-	echo ""
-echo "---------------------------------------"
-echo ""
-
-    done <<< "$(cat ~/.config/brestic/"$2" | grep "^SOURCE" | cut -d "=" -f2- | sed s'|"||'g)"
- 
-
-exit
-fi
-
-
-
-if [ "$1" = "ls" ]
-then
-RESTIC_PASSWORD=$PASS  restic -r $SERVER snapshots   
-exit
-fi
-
-
-if [ "$1" = "lsd" ]
-then
-RESTIC_PASSWORD=$PASS  restic -r $SERVER snapshots --path="$3"
-exit
-fi
-
-if [ "$1" = "lsh" ]
-then
-RESTIC_PASSWORD=$PASS  restic -r $SERVER snapshots --host "$3"
-exit
-fi
-
-if [ "$1" = "lsg" ]
-then
-RESTIC_PASSWORD=$PASS  restic -r $SERVER snapshots --group-by "$3"
-exit
-fi
-
-if [ "$1" = "lsl" ]
-then
-RESTIC_PASSWORD=$PASS  restic -r $SERVER ls latest
-exit
-fi
-
-
-
-if [ "$1" = "lss" ]
-then
-
-
-echo "
-ID        Time                 Host        Tags             Paths
-----------------------------------------------------------------------------"
-
-SNAP=$(RESTIC_PASSWORD=$PASS  restic -r $SERVER snapshots | tail -n +3 )
-
-echo "$SNAP" | head -n -2  | nl
-echo "---------------------------------------------------------------------------------------"
-echo "$SNAP" | tail -1 
-echo ""
-
-echo "¿Que nº de snapshoot quieres listar sus archivos?" ; read NUMERO
-RESTIC_PASSWORD=$PASS  restic -r $SERVER ls "$(echo "$SNAP" | sed -n ""$NUMERO""p |  cut -d " " -f1 |  sed 's/ //g')" 
-
-
-exit
-fi
-
-
-
-
-
-
-
-
-if [ "$1" = "m" ]
-then
-mkdir -p   ~/brestic        
-RESTIC_PASSWORD=$PASS restic -r $SERVER  mount ~/brestic    
-exit
-fi
-
-if [ "$1" = "c" ]
-then
- ls -1 --ignore="source" ~/.config/brestic 
-exit
-fi
-
-
-if [ "$1" = "copy" ]
-then
-source ~/.config/brestic/$2
-REPO1=$(echo $SERVER)
-    
-source ~/.config/brestic/$3  
-REPO2=$(echo $SERVER)
-
-RESTIC_PASSWORD=$PASS  restic -r $REPO1 copy --repo2 $REPO2
-exit
-fi
-
-
-
-
-
-
-
-
-
-echo "Modo de empleo: brestic [OPCIONES] [NOMBRE DE CONFIGURACIÓN]
-
-Para crear un nuevo archivo de configuración o modificarlo:
-   
-     brestic e [EDITOR]  [NOMBRE DE CONFIGURACIÓN]
- 
-                   Ejemplo:  brestic e nano webdav
-
-
-Opción 	    Significado
- i          Iniciar repositorio
- b          Hacer backup
- r          Restaurar backup
- ls         listar snapshot
- lsl        listar archivos del ultimo backup
- lss        Listar archivos de un snapshot 
- lsd         Filtrar por directorio
- lsh        Filtrar por host
- lsg        Listar Filtrado por su grupo host, rutas, etiquetas. (host, path, tags). 
- d / rm     borrar 1 snapshots de la lista. Podemos añadir última opción opcional, para filtrar por grupo
- dd         Eliminar definiticamente todos los snapshots borrados de la lista  
- u          Eliminar archivos obsoletos y bloqueos obsoletos . unlock. unlock --remove-all
- diff       Compara entre snapshots. 
- c          Listar archivos de configuración 
- m          Montar snapshot en el directorio ~/brestic
- copy       Copiar de un repositorio a otro
- install    Instalar en distros derivadas de debian
-
-Opción 	                           Segunda Opción        Significado
- cl     [NOMBRE DE CONFIGURACIÓN]  [NÚMERO DE BACKUPS]   borrar todo excepto los ultminos backups Especificados por el numero
- clh    [NOMBRE DE CONFIGURACIÓN]  [HORAS]               borrar por dias
- cld    [NOMBRE DE CONFIGURACIÓN]  [DIAS]                dias
- clw    [NOMBRE DE CONFIGURACIÓN]  [SEMANAS]             semanas
- clp    [NOMBRE DE CONFIGURACIÓN]                        Según configuración en archivo de configuración
-
-
-Ejemplos:
-
- Hacer backup del archivo de configuración trabajo
-
-    brestic b [NOMBRE DE CONFIGURACIÓN] 
-
- Borrar un snapshoot. Opcional añadir el grupo para filtrar por grupo (host, path, tags).
-
-    brestic d [NOMBRE DE CONFIGURACIÓN] [GRUPO] 
-
- Borrar todos los backups, excepto los 5 últimos
-
-    brestic cl [NOMBRE DE CONFIGURACIÓN] 5 
-
- Copiar de un repositorio a otro.
-
-    brestic copy [NOMBRE DE CONFIGURACIÓN 1] [NOMBRE DE CONFIGURACIÓN 1]
-
- Restaurar un snapshoot en una ruta:
-
-    brestic r [NOMBRE DE CONFIGURACIÓN]
-   
-    Para restaurar en la misma ruta que estaba, cuando pregunta la ruta, escribe / 
-
-
-brestic $VERSION
-"
+# --- VARIABLES GLOBALES Y CONSTANTES ---
+readonly VERSION="v1.1.0 (Unified Logic)"
+readonly CONFIG_DIR="${HOME}/.config/brestic"
+
+# ==============================================================================
+# --- DEFINICIONES DE FUNCIONES
+# ==============================================================================
+
+# Muestra el mensaje de uso y sale.
+usage() {
+    cat <<'EOF'
+brestic v1.1.0 (Unified Logic)
+Un potente wrapper para 'restic' que simplifica la gestión de backups.
+
+-------------------------------------------------------------------------------
+Uso: brestic <COMANDO> <CONFIG_NAME> [ARGUMENTOS...]
+-------------------------------------------------------------------------------
+COMANDOS POR CATEGORÍA
+
+  Gestión de Configuraciones:
+  e <config_name>               Edita o crea un archivo de configuración.
+  c                             Lista todos los archivos de configuración.
+  install                       Instala/actualiza restic en sistemas Debian.
+
+  Operaciones Básicas del Repositorio:
+  i <config_name>               Inicializa el repositorio.
+  b <config_name>               Realiza un backup.
+  r <config_name>               Restaura interactivamente un snapshot.
+  d, rm <config_name>           Borra un snapshot seleccionado interactivamente.
+  u <config_name>               Desbloquea el repositorio (útil para errores).
+  dd <config_name>              Ejecuta 'prune' para limpiar datos no referenciados.
+
+  Listado y Búsqueda:
+  ls <config_name>              Lista todos los snapshots.
+  lsl <config_name>             Lista archivos del último snapshot.
+  lss <config_name>             Lista archivos de un snapshot seleccionado.
+
+  Limpieza y Mantenimiento Avanzado:
+  clean-monthly <config> <meses> Elimina día a día, conservando los días 1 y 15 (no toca el último mes).
+  clean-by-day <config> <meses>  Elimina día a día, empezando desde hace X meses (no toca el último mes).
+
+-------------------------------------------------------------------------------
+Notas Importantes:
+- ¡¡¡ Si algo falla, el comando 'brestic u <config>' es tu mejor amigo !!!
+- Los comandos de limpieza pueden ser lentos si el rango de meses es grande.
+-------------------------------------------------------------------------------
+EOF
+    command -v restic >/dev/null && restic version
+    exit 0
+}
+
+# Ejecuta restic con las credenciales y el repositorio del archivo de configuración.
+run_restic() {
+    if [[ -z "${PASS:-}" || -z "${SERVER:-}" ]]; then
+        echo "Error: 'PASS' y 'SERVER' deben estar definidas en el archivo de configuración." >&2
+        exit 1
+    fi
+    export RESTIC_PASSWORD="${PASS}"
+    export RESTIC_REPOSITORY="${SERVER}"
+    restic "$@"
+}
+
+# --- FUNCIÓN PRINCIPAL (Contiene toda la lógica del script) ---
+main() {
+    if [[ $# -eq 0 ]]; then usage; fi
+
+    mkdir -p "$CONFIG_DIR"
+
+    local CMD=$1
+    shift 
+
+    if [[ -n "${1:-}" ]]; then
+        local CONFIG_NAME=$1
+        local CONFIG_FILE="${CONFIG_DIR}/${CONFIG_NAME}"
+        if [[ -f "$CONFIG_FILE" ]]; then
+            # shellcheck source=/dev/null
+            source "$CONFIG_FILE"
+            export PASS SERVER
+        elif [[ ! "$CMD" =~ ^(e|c|install|-h|--help)$ ]]; then
+            echo "Error: El archivo de configuración '${CONFIG_FILE}' no existe." >&2
+            exit 1
+        fi
+    fi
+
+    case "$CMD" in
+        -h|--help) usage ;;
+        e) ${EDITOR:-nano} "${CONFIG_DIR}/${1:?Falta el nombre de la configuración}" ;;
+        c) ls -1 --ignore="source" "$CONFIG_DIR" ;;
+        install) sudo apt-get update && sudo apt-get install -y restic; sudo restic self-update ;;
+        i) run_restic init ;;
+        u) run_restic unlock ;;
+        dd) run_restic prune ;;
+        m) mkdir -p ~/brestic; run_restic mount ~/brestic ;;
+        ls) run_restic snapshots ;;
+        lsl) run_restic ls latest ;;
+        lss)
+            local snapshot_id; snapshot_id=$(select_snapshot)
+            [[ -n "$snapshot_id" ]] && run_restic ls "$snapshot_id"
+            ;;
+        d|rm)
+            local snapshot_id; snapshot_id=$(select_snapshot --group-by "${2:-}")
+            [[ -n "$snapshot_id" ]] && run_restic forget "$snapshot_id" --prune
+            ;;
+        b)
+            echo "Iniciando backup para '${1}'..."
+            grep '^SOURCE=' "$CONFIG_FILE" | cut -d'=' -f2- | sed 's/"//g' | while read -r backup_path; do
+                echo "--- Haciendo backup de los argumentos: ${backup_path} ---"
+                # shellcheck disable=SC2086
+                run_restic backup $backup_path --verbose
+            done
+            echo "Backup completado."
+            ;;
+        
+        # LÓGICA REESCRITA para seguir el método de clean-by-day
+        clean-monthly)
+            local months="${2:?Falta el número de meses. Uso: brestic clean-monthly <config> <meses>}"
+            if ! [[ "$months" =~ ^[1-9][0-9]*$ ]]; then
+                echo "Error: El número de meses debe ser un entero positivo." >&2; exit 1
+            fi
+
+            local start_date; start_date=$(date -d "$months months ago" +'%Y-%m-%d')
+            local end_date; end_date=$(date -d "1 month ago" +'%Y-%m-%d')
+            
+            echo "Se procesarán los días desde $start_date hasta $end_date."
+            echo "Se eliminarán los snapshots EXCEPTO los de los días 1 y 15."
+            read -rp "¿Continuar? (s/N): " confirm
+            if [[ ! "$confirm" =~ ^[sS]$ ]]; then
+                echo "Operación cancelada."; exit 0
+            fi
+
+            echo "INFO: Desbloqueando el repositorio para asegurar un inicio limpio..."
+            run_restic unlock
+
+            local current_date="$start_date"
+            while [[ "$current_date" != "$end_date" ]]; do
+                local day_of_month; day_of_month=$(date -d "$current_date" +%d)
+                
+                # Comprobar si el día es 1 o 15
+                if [[ "$day_of_month" == "01" || "$day_of_month" == "15" ]]; then
+                    echo "--- (Conservando fecha: $current_date, día $day_of_month) ---"
+                else
+                    # Si no es 1 o 15, llamar al borrado por fecha
+                    "$0" "date-$current_date" "$CONFIG_NAME"
+                fi
+                current_date=$(date -d "$current_date + 1 day" +'%Y-%m-%d')
+            done
+            echo "Limpieza mensual completada."
+            ;;
+
+        clean-by-day)
+            local months="${2:?Falta el número de meses. Uso: brestic clean-by-day <config> <meses>}"
+            if ! [[ "$months" =~ ^[1-9][0-9]*$ ]]; then
+                echo "Error: El número de meses debe ser un entero positivo." >&2; exit 1
+            fi
+            
+            local start_date; start_date=$(date -d "$months months ago" +'%Y-%m-%d')
+            local end_date; end_date=$(date -d "1 month ago" +'%Y-%m-%d')
+            
+            echo "Se eliminarán los snapshots, día por día, desde $start_date hasta $end_date."
+            echo "NOTA: Los snapshots del último mes no se tocarán."
+            read -rp "¿Continuar? (s/N): " confirm
+            if [[ ! "$confirm" =~ ^[sS]$ ]]; then
+                echo "Operación cancelada."; exit 0
+            fi
+
+            echo "INFO: Desbloqueando el repositorio para asegurar un inicio limpio..."
+            run_restic unlock
+
+            local current_date="$start_date"
+            while [[ "$current_date" != "$end_date" ]]; do
+                "$0" "date-$current_date" "$CONFIG_NAME"
+                current_date=$(date -d "$current_date + 1 day" +'%Y-%m-%d')
+            done
+            echo "Limpieza por día completada."
+            ;;
+
+        # COMANDO DE APOYO: Borra todos los snapshots de un día específico.
+        date-*)
+            local date_to_delete="${CMD#date-}"
+            echo "--- (Procesando fecha: $date_to_delete) ---"
+            
+            local ids_to_delete; ids_to_delete=$(run_restic snapshots --json | jq -r ".[] | select(.time | startswith(\"$date_to_delete\")) | .short_id")
+
+            if [[ -z "$ids_to_delete" ]]; then
+                echo "No se encontraron snapshots para el día $date_to_delete."
+            else
+                echo "Eliminando snapshots del día $date_to_delete con IDs: $ids_to_delete"
+                # shellcheck disable=SC2086
+                run_restic forget --prune $ids_to_delete
+            fi
+            ;;
+
+        *)
+            echo "Error: Comando '$CMD' no reconocido." >&2
+            echo "Ejecuta 'brestic --help' para ver las opciones disponibles."
+            exit 1
+            ;;
+    esac
+}
+
+# --- PUNTO DE ENTRADA DEL SCRIPT ---
+main "$@"

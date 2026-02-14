@@ -10,3 +10,10 @@ KEEP="--keep-yearly 2 --keep-monthly 13"
 # Directorios que haremos el backup
 SOURCE="/home/angel/.config/rclone      --tag rclone"
 SOURCE="/home/angel/docker/homer        --tag homer"
+
+# Notificaciones
+NTFY_URL_SERVER=
+NTFY_USER=
+NTFY_PASS=
+TELEGRAM_TOKEN=
+TELEGRAM_ID=

@@ -1,7 +1,3 @@
-Aquí tienes el `README.md` actualizado para reflejar la versión **v2.0.0**, incluyendo las nuevas funcionalidades de notificación (ntfy y Telegram), comandos de navegación interactiva y la lógica de limpieza unificada.
-
----
-
 # brestic
 
 Un potente wrapper para 'restic' que simplifica la gestión de tus backups a través de la línea de comandos, ahora con notificaciones integradas y navegación interactiva.

@@ -1,17 +1,20 @@
 # brestic
 
-Un potente wrapper para 'restic' que simplifica la gestión de tus backups a través de la línea de comandos, ahora con notificaciones integradas y navegación interactiva.
+Un potente wrapper para 'restic' que simplifica la gestión de tus backups a través de la línea de comandos, ahora con notificaciones integradas, navegación interactiva y **explorador web profesional**.
 
 `brestic` nace de la necesidad de automatizar y simplificar las operaciones más comunes de `restic`, permitiendo gestionar complejas políticas de retención, múltiples fuentes de backup y recibir alertas en tiempo real en tu móvil.
 
 ![Bash Shell](https://img.shields.io/badge/Shell-Bash-blue?style=for-the-badge&logo=gnu-bash)
-![Version](https://img.shields.io/badge/Version-v2.0.0-green?style=for-the-badge)
+![Python](https://img.shields.io/badge/Python-3.x-yellow?style=for-the-badge&logo=python)
+![Flask](https://img.shields.io/badge/Web-Flask-lightgrey?style=for-the-badge&logo=flask)
+![Version](https://img.shields.io/badge/Version-v2.1.0-green?style=for-the-badge)
 
-## Características Principales
+## 🚀 Características Principales
 
 -   **Notificaciones Multi-canal**: Recibe confirmaciones de tus backups en **ntfy** y **Telegram** automáticamente. Soporta formato Markdown para mayor legibilidad.
--   **Sintaxis Unificada v2.0**: Comandos simplificados y potentes para gestionar el ciclo de vida completo del dato.
--   **Navegación Interactiva**: 
+-   **PyBrestic (Explorador Web)**: Nueva interfaz gráfica en Flask para navegar por tus snapshots, previsualizar archivos y realizar restauraciones desde el navegador.
+-   **Sintaxis Unificada v2.1**: Comandos simplificados y potentes para gestionar el ciclo de vida completo del dato.
+-   **Navegación Interactiva CLI**: 
     -   `nav`: Explora tus backups como si fueran carpetas locales usando `fzf`.
     -   `diff`: Compara visualmente qué ha cambiado entre dos snapshots.
 -   **Gestión por Archivos de Configuración**: Organiza tus backups por proyectos. Cada archivo en `~/.config/brestic/` es un perfil independiente.
@@ -20,19 +23,23 @@ Un potente wrapper para 'restic' que simplifica la gestión de tus backups a tra
     -   `clp`: Aplica políticas personalizadas definidas directamente en tu archivo de configuración.
 -   **Robusto**: Gestión de bloqueos automática (`unlock`) y validación de integridad de datos.
 
-## Requisitos
+## 📋 Requisitos
 
 1.  **`restic`**: La herramienta de backup principal.
 2.  **`jq`**: Para procesar metadatos de los snapshots.
-3.  **`fzf`**: (Opcional pero recomendado) Para la navegación interactiva y selección de archivos.
-4.  **`curl`**: Para el envío de notificaciones.
+3.  **`fzf`**: Para la navegación interactiva y selección de archivos en terminal.
+4.  **`Python 3 & Flask`**: Necesarios para el explorador web (`pybrestic.py`).
+    ```bash
+    pip install flask
+    ```
 
-Instalación rápida en Debian/Ubuntu:
+Instalación rápida de dependencias en Debian/Ubuntu:
 ```bash
 brestic install
+sudo apt install jq fzf python3-flask
 ```
 
-## Instalación
+## ⚙️ Instalación
 
 1.  **Clona el repositorio**:
     ```bash
@@ -44,11 +51,11 @@ brestic install
     sudo chmod +x /usr/local/bin/brestic
     ```
 
-## Configuración
+## 🛠 Configuración
 
 Crea o edita un perfil con: `brestic e mi_servidor`.
 
-### Ejemplo de Configuración Completa (v2.0.0)
+### Ejemplo de Configuración Completa (v2.1.0)
 
 ```bash
 # ~/.config/brestic/mi_servidor
@@ -58,12 +65,7 @@ SERVER="rclone:drive:backups/web"
 PASS="tu_contrasena_segura"
 
 # --- Notificaciones (Opcional) ---
-# ntfy.sh o servidor propio
 NTFY_URL_SERVER="https://ntfy.sh/tu_topico_secreto"
-NTFY_USER="usuario"
-NTFY_PASS="password"
-
-# Telegram Bot
 TELEGRAM_TOKEN="123456:ABC-DEF..."
 TELEGRAM_ID="tu_id_de_usuario"
 
@@ -75,14 +77,15 @@ SOURCE="/home/user/documentos --tag docs"
 KEEP="--keep-daily 7 --keep-weekly 4 --keep-monthly 6"
 ```
 
-## Uso y Comandos
+## 📖 Uso y Comandos
 
 ### Gestión y Operaciones
 | Comando | Descripción |
 | :--- | :--- |
 | `b <config>` | **Backup**: Ejecuta las fuentes y envía notificaciones. |
 | `ls <config>` | Lista snapshots del repositorio. |
-| `m <config>` | Monta el repositorio en `~/brestic`. |
+| `m <config>` | **Montaje Simple**: Monta el repositorio en `~/brestic`. |
+| `mw <config>` | **Montaje Web**: Monta el repo e inicia el navegador Flask (PyBrestic). |
 | `nav <config>`| Navega por los archivos del backup con `fzf` (requiere `m`). |
 | `diff <config>`| Compara dos snapshots seleccionados visualmente. |
 | `u <config>` | Desbloquea el repositorio tras un fallo. |
@@ -96,9 +99,28 @@ KEEP="--keep-daily 7 --keep-weekly 4 --keep-monthly 6"
 | `date-YYYY-MM-DD` | Borra snapshots de una fecha específica. |
 | `word-TEXTO` | Borra snapshots que contengan un texto en su ruta. |
 
-## Automatización con Cron
+---
 
-Al usar `brestic` en cron, ya no necesitas revisar logs constantemente gracias a las notificaciones:
+## 🌐 PyBrestic: Explorador de Archivos Web
+
+El comando `brestic mw <config>` levanta una interfaz web potente que permite interactuar con tus backups sin usar la terminal.
+
+### Funcionalidades:
+- **Navegación Visual**: Explora la estructura de directorios de tus snapshots montados.
+- **Previsualización**: Ver contenido de archivos de texto, logs y otros formatos compatibles.
+- **Restauración Inteligente**: Descarga o restaura archivos y carpetas directamente a tu máquina local.
+- **Seguridad**: Acceso protegido mediante credenciales (Configurables en `pybrestic.py`).
+  - *Usuario por defecto*: `admin`
+  - *Password por defecto*: `brestic2024`
+
+### ¿Cómo funciona?
+Al lanzar `mw`, el script monta el repositorio restic en segundo plano, espera un tiempo prudencial (definido por `PYBRESTIC_SLEEP`) para que los archivos sean legibles, y arranca el servidor Flask en el puerto `5000`.
+
+---
+
+## ⏰ Automatización con Cron
+
+Aprovecha las notificaciones para estar al tanto de tus copias automáticas:
 
 ```crontab
 # Backup diario a las 03:00 AM
@@ -108,10 +130,10 @@ Al usar `brestic` en cron, ya no necesitas revisar logs constantemente gracias a
 00 5 * * 0 /usr/local/bin/brestic clp mi_servidor && /usr/local/bin/brestic dd mi_servidor
 ```
 
-## Notas de la Versión 2.0.0
-- **Formato de Notificación**: El nombre **Brestic** aparecerá en negrita en Telegram y ntfy.
-- **Seguridad**: Se han añadido banderas `-euo pipefail` para máxima fiabilidad en scripts automáticos.
-- **Mejora en `b`**: El comando de backup ahora itera correctamente sobre múltiples líneas `SOURCE` notificando cada éxito individualmente.
+## 📝 Notas de la Versión 2.1.0
+- **Integración PyBrestic**: Se ha unificado el navegador web con la lógica de montaje de restic.
+- **Lanzamiento Paralelo**: El comando `mw` gestiona procesos en segundo plano para no bloquear el terminal.
+- **Mejora en Notificaciones**: El nombre **Brestic** ahora utiliza formato Markdown para destacar en dispositivos móviles.
 
-## Licencia
-MIT © 2024-2025. Contribuciones bienvenidas vía PR.
+## 📄 Licencia
+MIT © 2024-2025. Contribuciones bienvenidas vía Pull Request.

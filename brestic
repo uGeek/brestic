@@ -11,7 +11,7 @@ if [[ -z "${HOME:-}" ]]; then
 fi
 
 # --- VARIABLES GLOBALES Y CONSTANTES ---
-readonly VERSION="v2.0.0 (Unified Full Feature)"
+readonly VERSION="v2.1.0 (Web Browser Integrated)"
 readonly CONFIG_DIR="${HOME}/.config/brestic"
 readonly SCRIPT_PATH="$(readlink -f "$0")"
 readonly PYBRESTIC="python /nube/scripts/brestic/pybrestic/pybrestic.py"
@@ -24,7 +24,7 @@ readonly PYBRESTIC_SLEEP="10"
 # Muestra el mensaje de uso y sale.
 usage() {
     cat <<'EOF'
-brestic v2.0.0 (Unified Full Feature)
+brestic v2.1.0 (Web Browser Integrated)
 Wrapper para 'restic' que unifica múltiples scripts y funcionalidades.
 
 -------------------------------------------------------------------------------
@@ -44,7 +44,7 @@ COMANDOS POR CATEGORÍA
   u <config>                    Desbloquea el repositorio (muy útil para errores).
   dd, prune <config>            Ejecuta 'prune' para limpiar datos no referenciados.
   m <config>                    Monta el repositorio en ~/brestic.
-  mw <config>                   Monta el repositorio e inicia el navegador web (Flask).
+  mw <config>                   Monta el repositorio e inicia PyBrestic (Web Browser).
   nav <config>                  Navega por los snapshots montados con fzf.
 
   Listado y Búsqueda:
@@ -77,7 +77,7 @@ COMANDOS POR CATEGORÍA
 -------------------------------------------------------------------------------
 Notas Importantes:
 - ¡¡¡ Si algo falla, el comando 'brestic u <config>' es tu mejor amigo !!!
-- Los comandos de limpieza ([N]m, 1-15, etc.) son potentes. Úsalos con precaución.
+- El comando 'mw' requiere que Flask esté instalado (pip install flask).
 -------------------------------------------------------------------------------
 EOF
     command -v restic >/dev/null && restic version
@@ -217,20 +217,21 @@ main() {
         dd|prune) run_restic prune ;;
         m) 
             mkdir -p ~/brestic
+            echo "Montando repositorio en ~/brestic..."
             run_restic mount ~/brestic 
             ;;
         mw)
             mkdir -p ~/brestic
-            echo "Montando repositorio restic y preparando PyBrestic..."
-            # Lanzamos en segundo plano la espera y la ejecución del navegador Flask
+            echo "Montando repositorio y preparando navegador web Flask..."
+            # Ejecución en paralelo del navegador tras la espera
             (
                 sleep "$PYBRESTIC_SLEEP"
-                echo "Iniciando PyBrestic..."
+                echo "Iniciando PyBrestic en http://localhost:5000 (puerto por defecto de Flask)..."
                 # shellcheck disable=SC2086
                 $PYBRESTIC
             ) &
-            # Ejecutamos el montaje en primer plano
-            run_restic mount ~/brestic 
+            # El montaje debe ejecutarse en primer plano para mantener el repositorio activo
+            run_restic mount ~/brestic
             ;;
         ls) run_restic snapshots "$@" ;;
         lsl) run_restic ls latest ;;

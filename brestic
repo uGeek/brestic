@@ -15,7 +15,7 @@ readonly VERSION="v2.1.0 (Web Browser Integrated)"
 readonly CONFIG_DIR="${HOME}/.config/brestic"
 readonly SCRIPT_PATH="$(readlink -f "$0")"
 readonly PYBRESTIC="python /nube/scripts/brestic/pybrestic/pybrestic.py"
-readonly PYBRESTIC_SLEEP="10"
+readonly PYBRESTIC_SLEEP="20"
 
 # ==============================================================================
 # --- DEFINICIONES DE FUNCIONES

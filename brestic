@@ -14,6 +14,8 @@ fi
 readonly VERSION="v2.0.0 (Unified Full Feature)"
 readonly CONFIG_DIR="${HOME}/.config/brestic"
 readonly SCRIPT_PATH="$(readlink -f "$0")"
+readonly PYBRESTIC="python /nube/scripts/brestic/pybrestic/pybrestic.py"
+readonly PYBRESTIC_SLEEP="10"
 
 # ==============================================================================
 # --- DEFINICIONES DE FUNCIONES
@@ -42,6 +44,7 @@ COMANDOS POR CATEGORÍA
   u <config>                    Desbloquea el repositorio (muy útil para errores).
   dd, prune <config>            Ejecuta 'prune' para limpiar datos no referenciados.
   m <config>                    Monta el repositorio en ~/brestic.
+  mw <config>                   Monta el repositorio e inicia el navegador web (Flask).
   nav <config>                  Navega por los snapshots montados con fzf.
 
   Listado y Búsqueda:
@@ -212,7 +215,23 @@ main() {
         i) run_restic init ;;
         u) run_restic unlock ;;
         dd|prune) run_restic prune ;;
-        m) mkdir -p ~/brestic; run_restic mount ~/brestic ;;
+        m) 
+            mkdir -p ~/brestic
+            run_restic mount ~/brestic 
+            ;;
+        mw)
+            mkdir -p ~/brestic
+            echo "Montando repositorio restic y preparando PyBrestic..."
+            # Lanzamos en segundo plano la espera y la ejecución del navegador Flask
+            (
+                sleep "$PYBRESTIC_SLEEP"
+                echo "Iniciando PyBrestic..."
+                # shellcheck disable=SC2086
+                $PYBRESTIC
+            ) &
+            # Ejecutamos el montaje en primer plano
+            run_restic mount ~/brestic 
+            ;;
         ls) run_restic snapshots "$@" ;;
         lsl) run_restic ls latest ;;
         
